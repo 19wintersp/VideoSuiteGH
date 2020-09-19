@@ -16,7 +16,7 @@ namespace Needle
     {
         //DATA
         public const string fileFormatVersion = "Needle SDxArrv2.1";
-        public const string stitcherVersion = "[ALPHA 2.4.5]";
+        public const string stitcherVersion = "[INDEV 2.7]";
         //FILM
         public Dictionary<string, string> meta;
         public List<List<string>> film;
