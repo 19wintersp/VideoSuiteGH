@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ namespace Needle
         //DATA
         public const string fileFormatVersion = "Needle SDxArrv2.1";
         public const string stitcherVersion = "[INDEV 2.7]";
+        private Color transGreen = Color.FromArgb(0, 0, 255, 0);
         //FILM
         public Dictionary<string, string> meta;
         public List<List<string>> film;
@@ -88,6 +90,7 @@ namespace Needle
             filemenu.DropDownItems.Add(new ToolStripSeparator());
             filemenu.DropDownItems.Add("Configuration", (Image)null, new EventHandler(ShowConfig));
             filemenu.DropDownItems.Add(new ToolStripSeparator());
+            filemenu.DropDownItems.Add("Crash", (Image)null, (object sender, EventArgs e) => { int xrr = 1; xrr--; int err = 1 / xrr; });
             filemenu.DropDownItems.Add("Quit", (Image)null, new EventHandler(QuitApp));
             ToolStripMenuItem framemenu = new ToolStripMenuItem("Import Image...");
             framemenu.DropDownItems.Add("From Camera", (Image)null, new EventHandler(CameraFrame));
@@ -100,7 +103,7 @@ namespace Needle
             videomenu.DropDownItems.Add("Export", (Image)null, new EventHandler(ExportVideo));
             viewmenu.DropDownItems.Add("Reload Data", (Image)null, new EventHandler(UpdateEdit));
             viewmenu.DropDownItems.Add("Refresh view", (Image)null, new EventHandler(RedrawUi));
-            ToolStripMenuItem helpbutt = new ToolStripMenuItem("Help", (Image) null, new EventHandler(ShowHelp));
+            ToolStripMenuItem helpbutt = new ToolStripMenuItem("Help", (Image)null, new EventHandler(ShowHelp));
             menuStrip1.Items.Add(filemenu);
             menuStrip1.Items.Add(viewmenu);
             menuStrip1.Items.Add(videomenu);
@@ -196,7 +199,7 @@ namespace Needle
             ((Button)refboxparent.Controls[refboxparent.Controls.Count - 1]).Click += new EventHandler(NewFrame);
             /*// VIEWPORT //*/
             //Inconspicuous empty space
-            
+
             /*// TIMELINE //*/
 
             framelistparent = new ContainerControl()
@@ -274,16 +277,110 @@ namespace Needle
             scenelistparent.Controls.Add(new Label() { Text = "Scenes", Location = new Point(2, 2) });
             HorizontalScrollBars(scenelist);
             /*// LAUNCHER //*/
-            if (showLauncher)
+            if (showLauncher && true)
             {
-                launcher = new Form() { Width = 182, Height = 123, Text = "Start", ControlBox = false, ShowIcon = false, Icon = new Icon("img/stitcher.ico"), SizeGripStyle = SizeGripStyle.Hide };
-                launcher.Controls.Add(new Button() { Text = "New project", DialogResult = DialogResult.OK, Height = 30, Width = 160, Top = 19, Left = 2 });
-                ((Button)launcher.Controls[launcher.Controls.Count - 1]).Click += new EventHandler(NewVid);
-                ((Button)launcher.Controls[launcher.Controls.Count - 1]).Click += new EventHandler(DestroyParent);
-                launcher.Controls.Add(new Button() { Text = "Open project", DialogResult = DialogResult.OK, Height = 30, Width = 160, Top = 51, Left = 2 });
-                ((Button)launcher.Controls[launcher.Controls.Count - 1]).Click += new EventHandler(OpenFile);
-                ((Button)launcher.Controls[launcher.Controls.Count - 1]).Click += new EventHandler(DestroyParent);
-                launcher.Controls.Add(new Label() { Text = "Welcome to Stitcher!", Height = 15, Width = 160, Left = 2, Top = 2 });
+                launcher = new Form() {
+                    Width = 500,
+                    Height = 300,
+                    Text = "Stitcher Launcher",
+                    FormBorderStyle = FormBorderStyle.None,
+                    ControlBox = false,
+                    ShowIcon = false,
+                    Icon = new Icon("img/stitcher.ico"), 
+                    SizeGripStyle = SizeGripStyle.Hide,
+                    BackgroundImage = Image.FromFile("img/lbg.jpg"),
+                    BackgroundImageLayout = ImageLayout.Stretch,
+                    Name = "u000;000"
+                };
+
+                Button newbutt = new Design.DButton()
+                {
+                    Text = "New project",
+                    DialogResult = DialogResult.OK,
+                    Size = new Size(200, 30),
+                    Location = new Point(290, 220)
+                };
+                newbutt.Click += (object sender, EventArgs e) => { NewVid(); DestroyParent(sender, e); };
+                Button openbutt = new Design.DButton()
+                {
+                    Text = "Open project",
+                    DialogResult = DialogResult.OK,
+                    Size = new Size(200, 30),
+                    Location = new Point(290, 260)
+                };
+                openbutt.Click += (object sender, EventArgs e) => { if (OpenFile()) DestroyParent(sender, e); };
+                Button killbutt = new Button()
+                {
+                    Text = "X",
+                    Size = new Size(20, 20),
+                    Location = new Point(470, 10),
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    BackColor = transGreen
+                };
+                killbutt.Click += (object s, EventArgs e) => { QuitApp(true); };
+                Design.Flatten(killbutt);
+                killbutt.FlatAppearance.MouseOverBackColor = transGreen;
+                launcher.Controls.Add(newbutt);
+                launcher.Controls.Add(openbutt);
+                launcher.Controls.Add(killbutt);
+                launcher.Controls.Add(new Label()
+                {
+                    Text = "VideoSuite 2020",
+                    Location = new Point(10, 10),
+                    Size = new Size(200, 35),
+                    Font = new Font("Segoe UI", 15),
+                    BackColor = transGreen,
+                    Name = "suite"
+                });
+                launcher.Controls.Add(new Label()
+                {
+                    Text = "Stitcher",
+                    Font = new Font("Segoe UI Emoji", 45),
+                    Size = new Size(260, 70),
+                    Location = new Point(0, 33),
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    BackColor = transGreen,
+                    Name = "appnm"
+                });
+                launcher.Controls.Add(new Label()
+                {
+                    Text = "INDEV 2.7 UNSTABLE",
+                    Font = new Font("Segoe UI", 8),
+                    Size = new Size(200, 18),
+                    Location = new Point(10, 105),
+                    BackColor = transGreen,
+                    Name = "appv"
+                });
+                launcher.Controls.Add(new Label()
+                {
+                    Text = "Image by FelixMittermeier on Pixabay",
+                    Font = new Font("Segoe UI", 6),
+                    Size = new Size(200, 18),
+                    Location = new Point(10, 270),
+                    BackColor = transGreen,
+                    TextAlign = ContentAlignment.BottomLeft,
+                    Name = "imgcr"
+                });
+                MouseEventHandler windowMoveHand = (object sender, MouseEventArgs e) => {
+                    if (launcher.Name[0] == 'd')
+                    {
+                        launcher.Top += e.Y - int.Parse(launcher.Name.Substring(1, launcher.Name.IndexOf(';') - 1));
+                        launcher.Left += e.X - int.Parse(launcher.Name.Substring(launcher.Name.IndexOf(';') + 1));
+                    }
+                },
+                windowMsDn = (object sender, MouseEventArgs e) => { launcher.Name = "d" + e.Y.ToString() + ";" + e.X.ToString(); },
+                windowMsUp = (object sender, MouseEventArgs e) => { launcher.Name = "u000;000"; };
+
+                Design.DarkMode(launcher, true);
+                launcher.MouseMove += windowMoveHand;
+                launcher.MouseDown += windowMsDn;
+                launcher.MouseUp += windowMsUp;
+                foreach (Label lab in launcher.Controls.OfType<Label>())
+                {
+                    lab.MouseMove += windowMoveHand;
+                    lab.MouseDown += windowMsDn;
+                    lab.MouseUp += windowMsUp;
+                }
                 launcher.ShowDialog(this);
                 launcher.Dispose();
             }
@@ -303,7 +400,7 @@ namespace Needle
             refboxparent.Size = new Size((this.Width / 3) - 40, (this.Height / 5 * 2) - 55);
             refbox.Size = new Size(refboxparent.Width - 4, refboxparent.Height - 26);
             refboxparent.Controls[refboxparent.Controls.Count - 1].Left = refboxparent.Width - 22;
-            refboxparent.Controls[refboxparent.Controls.Count - 2].Width= refboxparent.Width - 26;
+            refboxparent.Controls[refboxparent.Controls.Count - 2].Width = refboxparent.Width - 26;
             ResizeChildWidth(refbox);
             VerticalScrollBars(refbox);
             /*// TIMELINE //*/
@@ -368,7 +465,7 @@ namespace Needle
                     try
                     {
                         film.Insert(sceneIndex + (dir ? 1 : -1), scene);
-                    } catch(ArgumentOutOfRangeException err)
+                    } catch (ArgumentOutOfRangeException err)
                     {
                         MessageBox.Show("Index out of range: cannot move scene outside of film bounds.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         film.Insert(sceneIndex, scene);
@@ -389,7 +486,7 @@ namespace Needle
                 }) { index = sceneNum });
 
                 scfi = 0;
-                foreach(string frame in scene)
+                foreach (string frame in scene)
                 {
                     //FRAME
                     if (sceneNum == openScene)
@@ -475,7 +572,7 @@ namespace Needle
         {
             if (MessageBox.Show("Any unsaved changes will be lost. Continue?", "New Project", MessageBoxButtons.YesNo, MessageBoxIcon.Asterisk) != DialogResult.Yes) return;
             Button sub = new Button() { Text = "Create", Location = new Point(50, 55), Size = new Size(70, 25) }, canx = new Button() { Text = "Cancel", Location = new Point(125, 55), Size = new Size(70, 25) };
-            TextBox pnm = new TextBox() { PlaceholderText="Project name", Location = new Point(5, 5), Size = new Size(190, 20) }, fnm = new TextBox() { PlaceholderText="Film Name", Location = new Point(5, 30), Size = new Size(190, 20) };
+            TextBox pnm = new TextBox() { PlaceholderText = "Project name", Location = new Point(5, 5), Size = new Size(190, 20) }, fnm = new TextBox() { PlaceholderText = "Film Name", Location = new Point(5, 30), Size = new Size(190, 20) };
             cbx = new Form() { Text = "New Project", ControlBox = false, ShowIcon = false, ShowInTaskbar = false, Size = new Size(215, 125), SizeGripStyle = SizeGripStyle.Hide };
             cbx.Controls.Add(pnm);
             cbx.Controls.Add(fnm);
@@ -533,16 +630,19 @@ namespace Needle
             tsdi1.Enabled = true;
         }
         private void OpenFile(object sender, EventArgs e) { OpenFile(); }
-        private void OpenFile()
+        private bool OpenFile()
         {
+            bool ofs = false;
             statusBarInstruction.Text = "Opening file...";
             OpenFileDialog ofdialog = new OpenFileDialog();
             ofdialog.Filter = "Stitcher files (*.ndls)|*.ndls;*.stitchdoc;*.stcmf";
             if (ofdialog.ShowDialog() == DialogResult.OK)
             {
                 if (System.IO.File.Exists(ofdialog.FileName)) Open(ofdialog.FileName);
+                ofs = true;
             }
             statusBarInstruction.Text = "Ready";
+            return ofs;
         }
         private void Open(string path)
         {
@@ -757,7 +857,7 @@ namespace Needle
             try
             {
                 exporter.Open(selloc, Int32.Parse(res[0]), Int32.Parse(res[1]), Int32.Parse(expfm.Controls[1].Text), usedcodec);
-            } catch(Exception err)
+            } catch (Exception err)
             {
                 MessageBox.Show("An error occurred whilst exporting your video. Message:\n" + err.ToString(), "Critical Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
@@ -866,12 +966,84 @@ namespace Needle
             this.Text = meta["projectname"] + " - Stitcher " + stitcherVersion;
         }
         private void CloseCBX(object sender, EventArgs e) { cbx.Close(); }
-        private void QuitApp(object sender, EventArgs e) { QuitApp(); }
-        private void QuitApp() {
-            if (MessageBox.Show("Unsaved changes will be lost. Do you wish to continue?", "Quit App", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) return;
+        private void QuitApp(object sender, EventArgs e) { QuitApp(false); }
+        private void QuitApp() { QuitApp(false); }
+        private void QuitApp(bool hdbx) {
+            if (!hdbx && MessageBox.Show("Unsaved changes will be lost. Do you wish to continue?", "Quit App", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) return;
             if (vsource != null) if (vsource.IsRunning) vsource.SignalToStop();
             this.Dispose();
             Application.Exit();
+        }
+    }
+
+    public static class Design
+    {
+        public static GraphicsPath RoundedBorder(RectangleF Rect, int radius)
+        {
+            float r2 = radius / 2f;
+            GraphicsPath GraphPath = new GraphicsPath();
+            GraphPath.AddArc(Rect.X, Rect.Y, radius, radius, 180, 90);
+            GraphPath.AddLine(Rect.X + r2, Rect.Y, Rect.Width - r2, Rect.Y);
+            GraphPath.AddArc(Rect.X + Rect.Width - radius, Rect.Y, radius, radius, 270, 90);
+            GraphPath.AddLine(Rect.Width, Rect.Y + r2, Rect.Width, Rect.Height - r2);
+            GraphPath.AddArc(Rect.X + Rect.Width - radius,
+                             Rect.Y + Rect.Height - radius, radius, radius, 0, 90);
+            GraphPath.AddLine(Rect.Width - r2, Rect.Height, Rect.X + r2, Rect.Height);
+            GraphPath.AddArc(Rect.X, Rect.Y + Rect.Height - radius, radius, radius, 90, 90);
+            GraphPath.AddLine(Rect.X, Rect.Height - r2, Rect.X, Rect.Y + r2);
+            GraphPath.CloseFigure();
+            return GraphPath;
+        }
+
+        public static void AddRoundedBorder(Control ctrl, int radius = 10)
+        {
+            RectangleF Rect = new RectangleF(0, 0, ctrl.Width, ctrl.Height);
+            using (GraphicsPath GraphPath = RoundedBorder(Rect, radius))
+            {
+                ctrl.Region = new Region(GraphPath);
+            }
+        }
+
+        public static void Flatten(Button ctrl)
+        {
+            ctrl.FlatStyle = FlatStyle.Flat;
+            ctrl.FlatAppearance.BorderSize = 0;
+            ctrl.FlatAppearance.BorderColor = Color.FromArgb(0, 255, 255, 255);
+            Flatten((Control) ctrl);
+        }
+        public static void Flatten(Control ctrl)
+        {
+            ctrl.TabStop = false;
+        }
+
+        /// <summary>
+        /// Add standard dark mode to WinForms Control
+        /// </summary>
+        /// <param name="ctrl">Control to edit</param>
+        /// <param name="bg">Whether control is a background element</param>
+        /// <param name="hover">Whether control should change color on hover</param>
+        public static void DarkMode(Control ctrl, bool bg = false, bool hover = false)
+        {
+            ctrl.ForeColor = Color.White;
+            ctrl.BackColor = bg ? Color.FromArgb(50, 50, 50) : Color.FromArgb(16, 16, 16);
+            if (hover)
+            {
+                ctrl.MouseEnter += (object sender, EventArgs e) => { ctrl.BackColor = Color.FromArgb(32, 32, 32); };
+                ctrl.MouseLeave += (object sender, EventArgs e) => { ctrl.BackColor = Color.FromArgb(16, 16, 16); };
+            }
+        }
+
+        public class DButton : Button
+        {
+            public int BorderRadius = 10;
+
+            protected override void OnCreateControl()
+            {
+                base.OnCreateControl();
+                Flatten(this);
+                AddRoundedBorder(this, BorderRadius);
+                DarkMode(this, false, true);
+            }
         }
     }
 
