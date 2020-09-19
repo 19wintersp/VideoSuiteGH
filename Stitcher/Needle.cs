@@ -76,6 +76,7 @@ namespace Needle
             this.Icon = new Icon("img/stitcher.ico");
             this.KeyPreview = true;
             this.KeyDown += (object sender, KeyEventArgs e) => { if (selectImage && e.KeyCode == Keys.Escape) { ExitAddFrame(); } };
+            Design.DarkMode(this, true);
             /*// MENU BAR //*/
             menuStrip1 = new MenuStrip() { Dock = DockStyle.Top };
             ToolStripMenuItem filemenu = new ToolStripMenuItem("File"), videomenu = new ToolStripMenuItem("Video"), viewmenu = new ToolStripMenuItem("View");
@@ -110,11 +111,32 @@ namespace Needle
             menuStrip1.Items.Add(helpbutt);
             this.MainMenuStrip = menuStrip1;
             this.Controls.Add(menuStrip1);
+            Design.DarkMode(menuStrip1);
+            foreach (ToolStripMenuItem tsmi in menuStrip1.Items)
+            {
+                tsmi.MouseEnter += (object o, EventArgs e) => {
+                    ToolStripMenuItem s = (ToolStripMenuItem)o;
+                    s.ForeColor = Color.Black;
+                };
+                tsmi.DropDownOpened += (object o, EventArgs e) => {
+                    ToolStripMenuItem s = (ToolStripMenuItem)o;
+                    s.ForeColor = Color.Black;
+                };
+                tsmi.MouseLeave += (object o, EventArgs e) => {
+                    ToolStripMenuItem s = (ToolStripMenuItem)o;
+                    if (!s.Pressed) s.ForeColor = Color.White;
+                };
+                tsmi.DropDownClosed += (object o, EventArgs e) => {
+                    ToolStripMenuItem s = (ToolStripMenuItem)o;
+                    if (!s.Pressed) s.ForeColor = Color.White;
+                };
+            }
             /*// STATUSBAR //*/
             statusBar = new StatusBar() {
                 Dock = DockStyle.Bottom,
                 SizingGrip = false,
-                ShowPanels = true
+                ShowPanels = true,
+                BackColor = Color.Red
             };
             statusBarDate = new StatusBarPanel()
             {
@@ -129,7 +151,7 @@ namespace Needle
                 BorderStyle = StatusBarPanelBorderStyle.Raised,
                 Text = "Ready",
                 ToolTipText = "Application status",
-                AutoSize = StatusBarPanelAutoSize.Spring
+                AutoSize = StatusBarPanelAutoSize.Contents
             };
             statusBarActions.Add(new StatusBarPanel()
             {
@@ -149,8 +171,13 @@ namespace Needle
             });
             foreach (StatusBarPanel statusBarActionPanel in statusBarActions) statusBar.Panels.Add(statusBarActionPanel);
             statusBar.Panels.Add(statusBarInstruction);
+            statusBar.Panels.Add(new StatusBarPanel()
+            {
+                BorderStyle = StatusBarPanelBorderStyle.Raised,
+                AutoSize = StatusBarPanelAutoSize.Spring
+            });
             statusBar.Panels.Add(statusBarDate);
-            this.Controls.Add(statusBar);
+            //this.Controls.Add(statusBar);
             statusBar.PanelClick += (object sender, StatusBarPanelClickEventArgs e) => {
                 string cpttt = e.StatusBarPanel.ToolTipText;
                 if (cpttt == "Export video") ExportVideo();
@@ -170,12 +197,13 @@ namespace Needle
             };
             refbox = new ContainerControl()
             {
-                BackColor = Color.White,
                 Left = 2,
                 Top = 22,
                 AutoScroll = true
             };
             this.Controls.Add(refboxparent);
+            Design.DarkMode(refboxparent, true);
+            Design.AddBorder(refboxparent);
             refboxparent.Controls.Add(refbox);
             refbox.HorizontalScroll.Enabled = false;
             refbox.HorizontalScroll.Visible = false;
@@ -187,8 +215,9 @@ namespace Needle
                 Width = refboxparent.Width - 26,
                 Height = 20
             });
-            refboxparent.Controls.Add(new Button()
+            refboxparent.Controls.Add(new Design.DButton()
             {
+                BorderRadius = 5,
                 Text = "+",
                 Left = refboxparent.Width - 22,
                 Top = 2,
@@ -212,7 +241,6 @@ namespace Needle
             };
             framelist = new FlowLayoutPanel()
             {
-                BackColor = Color.White,
                 Left = 2,
                 Top = 22,
                 AutoScroll = false,
@@ -221,8 +249,10 @@ namespace Needle
                 AllowDrop = true
             };
             this.Controls.Add(framelistparent);
+            Design.DarkMode(framelistparent, true);
+            Design.AddBorder(framelistparent);
             framelistparent.Controls.Add(framelist);
-            framelistnewbutt = new Button()
+            framelistnewbutt = new Design.DButton()
             {
                 Text = "+",
                 TextAlign = ContentAlignment.MiddleCenter,
@@ -256,7 +286,6 @@ namespace Needle
             };
             scenelist = new FlowLayoutPanel()
             {
-                BackColor = Color.White,
                 Left = 2,
                 Top = 22,
                 AutoScroll = false,
@@ -264,8 +293,10 @@ namespace Needle
                 WrapContents = false
             };
             this.Controls.Add(scenelistparent);
+            Design.DarkMode(scenelistparent, true);
+            Design.AddBorder(scenelistparent);
             scenelistparent.Controls.Add(scenelist);
-            scenelistnewbutt = new Button()
+            scenelistnewbutt = new Design.DButton()
             {
                 Text = "+",
                 Size = new Size(20, 20),
@@ -381,7 +412,7 @@ namespace Needle
                     lab.MouseDown += windowMsDn;
                     lab.MouseUp += windowMsUp;
                 }
-                launcher.ShowDialog(this);
+                if (launcher.ShowDialog(this) != DialogResult.OK) QuitApp(true);
                 launcher.Dispose();
             }
             /*// Fix TwoRedraw and RBI bugs //*/
@@ -396,6 +427,7 @@ namespace Needle
         private void RedrawUi(object sender, EventArgs e) { DrawUi(); }
         private void DrawUi()
         {
+            this.Invalidate();
             /*// REFERENCES //*/
             refboxparent.Size = new Size((this.Width / 3) - 40, (this.Height / 5 * 2) - 55);
             refbox.Size = new Size(refboxparent.Width - 4, refboxparent.Height - 26);
@@ -969,7 +1001,7 @@ namespace Needle
         private void QuitApp(object sender, EventArgs e) { QuitApp(false); }
         private void QuitApp() { QuitApp(false); }
         private void QuitApp(bool hdbx) {
-            if (!hdbx && MessageBox.Show("Unsaved changes will be lost. Do you wish to continue?", "Quit App", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) return;
+            if (!hdbx) if (MessageBox.Show("Unsaved changes will be lost. Do you wish to continue?", "Quit App", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) return;
             if (vsource != null) if (vsource.IsRunning) vsource.SignalToStop();
             this.Dispose();
             Application.Exit();
@@ -1002,6 +1034,17 @@ namespace Needle
             {
                 ctrl.Region = new Region(GraphPath);
             }
+        }
+
+        public static void AddBorder(Control ctrl)
+        {
+            ctrl.FindForm().Paint += (object s, PaintEventArgs e) =>
+            {
+                Rectangle rectangle = ctrl.ClientRectangle;
+                rectangle.Offset(ctrl.Left, ctrl.Top);
+                rectangle.Inflate(3, 3);
+                ControlPaint.DrawBorder3D(e.Graphics, rectangle, Border3DStyle.Flat);
+            };
         }
 
         public static void Flatten(Button ctrl)
@@ -1067,6 +1110,7 @@ namespace Needle
 
         public Tile(string imagePath, Action<Tile, bool> moveHandler, Action<Tile> deleteHandler, Action<Tile> selectionHandler)
         {
+            BorderStyle = BorderStyle.None;
             Size = new Size(stdWidth + 4, stdHeight + 4);
             ctct = new GroupBox()
             {
@@ -1083,24 +1127,24 @@ namespace Needle
                 TextAlign = ContentAlignment.MiddleCenter,
                 ImageAlign = ContentAlignment.MiddleCenter
             };
-            deleteButt = new Button()
+            deleteButt = new Design.DButton()
             {
                 Text = "🗑️",
                 Size = new Size(20, 20),
                 Location = new Point(stdWidth - 22, stdHeight - 22)
             };
-            selectButt = new Button()
+            selectButt = new Design.DButton()
             {
                 Text = "Open",
                 Size = new Size(50, 20),
                 Location = new Point((stdWidth / 2) - 25, stdHeight - 22)
             };
-            moveButts = new Tuple<Button, Button>(new Button()
+            moveButts = new Tuple<Button, Button>(new Design.DButton()
             {
                 Text = "<",
                 Size = new Size(20, 20),
                 Location = new Point(2, stdHeight - 22)
-            }, new Button()
+            }, new Design.DButton()
             {
                 Text = ">",
                 Size = new Size(20, 20),
@@ -1153,7 +1197,9 @@ namespace Needle
         private Tuple<Button, Button> moveButts;
         private GroupBox ctct;
 
-        public FrameTile(string imagePath, Action<FrameTile, bool> moveHandler, Action<FrameTile> deleteHandler, Action<FrameTile> selectionHandler) {
+        public FrameTile(string imagePath, Action<FrameTile, bool> moveHandler, Action<FrameTile> deleteHandler, Action<FrameTile> selectionHandler)
+        {
+            BorderStyle = BorderStyle.None;
             Size = new Size(stdWidth + 4, stdHeight + 4);
             ctct = new GroupBox()
             {
@@ -1171,30 +1217,30 @@ namespace Needle
                 TextAlign = ContentAlignment.MiddleCenter,
                 ImageAlign = ContentAlignment.MiddleCenter
             };
-            deleteButt = new Button()
+            deleteButt = new Design.DButton()
             {
                 Text = "🗑️",
                 Size = new Size(20, 20),
                 Location = new Point(stdWidth - 22, stdHeight - 22)
             };
-            infoButt = new Button()
+            infoButt = new Design.DButton()
             {
                 Text = "?",
                 Size = new Size(20, 20),
                 Location = new Point(stdWidth - 44, stdHeight - 22)
             };
-            selectButt = new Button()
+            selectButt = new Design.DButton()
             {
                 Text = "Edit",
                 Size = new Size(50, 20),
                 Location = new Point((stdWidth / 2) - 25, stdHeight - 22)
             };
-            moveButts = new Tuple<Button, Button>(new Button()
+            moveButts = new Tuple<Button, Button>(new Design.DButton()
             {
                 Text = "<",
                 Size = new Size(20, 20),
                 Location = new Point(2, stdHeight - 22)
-            }, new Button()
+            }, new Design.DButton()
             {
                 Text = ">",
                 Size = new Size(20, 20),
