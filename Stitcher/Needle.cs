@@ -104,7 +104,7 @@ namespace Needle
             //videomenu.DropDownItems.Add("New Frame", (Image)null, new EventHandler(NewFrame));
             videomenu.DropDownItems.Add(new ToolStripSeparator());
             videomenu.DropDownItems.Add("Export", (Image)null, new EventHandler(ExportVideo));
-            viewmenu.DropDownItems.Add("Reload Data", (Image)null, new EventHandler(UpdateEdit));
+            viewmenu.DropDownItems.Add("Reload data", (Image)null, new EventHandler(UpdateEdit));
             viewmenu.DropDownItems.Add("Refresh view", (Image)null, new EventHandler(RedrawUi));
             ToolStripMenuItem helpbutt = new ToolStripMenuItem("Help", (Image)null, new EventHandler(ShowHelp));
             menuStrip1.Items.Add(filemenu);
@@ -585,7 +585,7 @@ namespace Needle
         }
         private void SetHighlight(Control ctrl, bool highlight)
         {
-            //ctrl.BackColor = highlight ? Color.FromArgb(238, 238, 238) : Color.White;
+            /*//ctrl.BackColor = highlight ? Color.FromArgb(238, 238, 238) : Color.White;
             Color flashColour =
                 //Color.FromArgb(238, 238, 238);
                 //Color.Yellow;
@@ -603,7 +603,17 @@ namespace Needle
                     }
                 }
                 //else ctrl.BackColor = Color.White;
-            }).Start();
+            }).Start();*/
+
+            if (highlight)
+            {
+                ctrl.AccessibleDescription = "";
+                Design.AddBorder(ctrl);
+            }
+            else { 
+                ctrl.AccessibleDescription = "$";
+                ctrl.Invalidate();
+            }
         }
         private void ExitAddFrame()
         {
@@ -1065,16 +1075,20 @@ namespace Needle
 
         public static void AddBorder(Control ctrl)
         {
-            AddRoundedBorder(ctrl); //TEMPORARY
-            return;                 //TEMPORARY
-
-            ctrl.FindForm().Paint += (object s, PaintEventArgs e) =>
+            ctrl./*FindForm().*/Paint += (object s, PaintEventArgs e) =>
             {
+                if (ctrl.AccessibleDescription == "$") return;
+                //ctrl.Invalidate();
                 Rectangle rectangle = ctrl.ClientRectangle;
-                rectangle.Offset(ctrl.Left, ctrl.Top);
-                rectangle.Inflate(3, 3);
+                //rectangle.Offset(ctrl.Left, ctrl.Top);
+                //rectangle.Inflate(-3, -3);
                 ControlPaint.DrawBorder3D(e.Graphics, rectangle, Border3DStyle.Flat);
             };
+            ctrl.FindForm().Paint += (object s, PaintEventArgs e) =>
+            {
+                ctrl.Invalidate();
+            };
+            ctrl.Invalidate();
         }
 
         public static void Flatten(Button ctrl)
