@@ -40,7 +40,8 @@ namespace Needle
         private StatusBarPanel statusBarDate, statusBarInstruction;
         private List<StatusBarPanel> statusBarActions = new List<StatusBarPanel>();
         private ToolStripItem tsdi1;
-        private ContainerControl refbox, refboxparent, framelistparent, scenelistparent;
+        private Label promptInstruction;
+        private ContainerControl refbox, refboxparent, framelistparent, scenelistparent, statusprompt;
         private FlowLayoutPanel framelist, scenelist;
         private Form cbx; /*campvw (Camera Preview)*/
         private Font stdFont = new Font("Segoe UI Emoji", 10);
@@ -77,6 +78,7 @@ namespace Needle
             this.KeyPreview = true;
             this.KeyDown += (object sender, KeyEventArgs e) => { if (selectImage && e.KeyCode == Keys.Escape) { ExitAddFrame(); } };
             Design.DarkMode(this, true);
+            this.BackColor = Color.Black;
             /*// MENU BAR //*/
             menuStrip1 = new MenuStrip() { Dock = DockStyle.Top };
             ToolStripMenuItem filemenu = new ToolStripMenuItem("File"), videomenu = new ToolStripMenuItem("Video"), viewmenu = new ToolStripMenuItem("View");
@@ -203,7 +205,6 @@ namespace Needle
             };
             this.Controls.Add(refboxparent);
             Design.DarkMode(refboxparent, true);
-            Design.AddBorder(refboxparent);
             refboxparent.Controls.Add(refbox);
             refbox.HorizontalScroll.Enabled = false;
             refbox.HorizontalScroll.Visible = false;
@@ -226,7 +227,26 @@ namespace Needle
                 TextAlign = ContentAlignment.MiddleCenter
             });
             ((Button)refboxparent.Controls[refboxparent.Controls.Count - 1]).Click += new EventHandler(NewFrame);
-            /*// VIEWPORT //*/
+            /*// PROMPT //*/
+            statusprompt = new ContainerControl()
+            {
+                BackColor = Color.FromArgb(16, 16, 16),
+                Location = new Point(0, this.Height - 60),
+                Size = new Size(this.Width, 20),
+                AutoScroll = false
+            };
+            promptInstruction = new Label()
+            {
+                Text = "Ready",
+                BackColor = Color.FromArgb(16, 16, 16),
+                Location = new Point(0, 0),
+                Size = new Size(this.Width, 20),
+                ForeColor = Color.White
+            };
+            statusprompt.Controls.Add(promptInstruction);
+            this.Controls.Add(statusprompt);
+
+            /*// EDITING WORKSPACE //*/
             //Inconspicuous empty space
 
             /*// TIMELINE //*/
@@ -250,7 +270,6 @@ namespace Needle
             };
             this.Controls.Add(framelistparent);
             Design.DarkMode(framelistparent, true);
-            Design.AddBorder(framelistparent);
             framelistparent.Controls.Add(framelist);
             framelistnewbutt = new Design.DButton()
             {
@@ -294,7 +313,6 @@ namespace Needle
             };
             this.Controls.Add(scenelistparent);
             Design.DarkMode(scenelistparent, true);
-            Design.AddBorder(scenelistparent);
             scenelistparent.Controls.Add(scenelist);
             scenelistnewbutt = new Design.DButton()
             {
@@ -457,6 +475,15 @@ namespace Needle
                 ((Tile)sceneTile).stdHeight = (this.Height / 10 * 3) - 56 - 20;
                 ((Tile)sceneTile).Draw();
             }
+            /*// REFLIST //*/
+            foreach (Tuple<Label, Rectangle> rftp in refcts)
+            {
+                rftp.Item1.MaximumSize = new Size(refbox.Width - 10, 42);
+            }
+            /*// PROMPT //*/
+            statusprompt.Top = this.Height - 60;
+            statusprompt.Width = this.Width;
+            promptInstruction.Width = this.Width;
         }
         private void ShowHelp(object sender, EventArgs e)
         {
@@ -580,13 +607,13 @@ namespace Needle
         }
         private void ExitAddFrame()
         {
-            statusBarInstruction.Text = "Ready";
+            promptInstruction.Text = "Ready";
             selectImage = false;
             SetHighlight(refbox, false);
         }
         private void StartAddFrame()
         {
-            statusBarInstruction.Text = "Select an image to add to the scene... (Esc to cancel)";
+            promptInstruction.Text = "Select an image to add to the scene... (Esc to cancel)";
             selectImage = true;
             SetHighlight(refbox, true);
         }
@@ -624,14 +651,14 @@ namespace Needle
                 MessageBox.Show("No open document to save.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            statusBarInstruction.Text = "Saving...";
+            promptInstruction.Text = "Saving...";
             if (meta["savelocation"] != null) {
                 Save(meta["savelocation"]);
             } else {
                 //MessageBox.Show("The Document could not be found. Please save the document with a name first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 SaveAs();
             }
-            statusBarInstruction.Text = "Ready";
+            promptInstruction.Text = "Ready";
         }
         private void SaveAs(object sender, EventArgs e) { SaveAs(); }
         private void SaveAs()
@@ -641,14 +668,14 @@ namespace Needle
                 MessageBox.Show("No open document to save.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            statusBarInstruction.Text = "Saving...";
+            promptInstruction.Text = "Saving...";
             SaveFileDialog sfdialog = new SaveFileDialog();
             sfdialog.Filter = "Stitcher files (*.ndls)|*.ndls;*.stitchdoc;*.stcmf";
             if (sfdialog.ShowDialog() == DialogResult.OK)
             {
                 if (sfdialog.FileName != null) Save(sfdialog.FileName);
             }
-            statusBarInstruction.Text = "Ready";
+            promptInstruction.Text = "Ready";
         }
         private void Save(string path)
         {
@@ -665,7 +692,7 @@ namespace Needle
         private bool OpenFile()
         {
             bool ofs = false;
-            statusBarInstruction.Text = "Opening file...";
+            promptInstruction.Text = "Opening file...";
             OpenFileDialog ofdialog = new OpenFileDialog();
             ofdialog.Filter = "Stitcher files (*.ndls)|*.ndls;*.stitchdoc;*.stcmf";
             if (ofdialog.ShowDialog() == DialogResult.OK)
@@ -673,7 +700,7 @@ namespace Needle
                 if (System.IO.File.Exists(ofdialog.FileName)) Open(ofdialog.FileName);
                 ofs = true;
             }
-            statusBarInstruction.Text = "Ready";
+            promptInstruction.Text = "Ready";
             return ofs;
         }
         private void Open(string path)
@@ -702,7 +729,7 @@ namespace Needle
             UpdateEdit();
         }
         private void NewFile(object sender, EventArgs e) {
-            statusBarInstruction.Text = "Creating file...";
+            promptInstruction.Text = "Creating file...";
             Button cbt = ((Button)sender);
             Form pfm = cbt.FindForm();
             meta = new Dictionary<string, string>();
@@ -716,7 +743,7 @@ namespace Needle
             UpdateEdit();
             DrawUi();
             pfm.Close();
-            statusBarInstruction.Text = "Ready";
+            promptInstruction.Text = "Ready";
         }
         private void AddToSources(string path)
         {
@@ -791,7 +818,7 @@ namespace Needle
                 return;
             }
             if (videoDeviceMoniker == "") { MessageBox.Show("A camera has not been detected. Please set this up in the Configuration menu.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
-            statusBarInstruction.Text = "Taking photo...";
+            promptInstruction.Text = "Taking photo...";
             if (MessageBox.Show("Press OK to take photo.", "Camera", MessageBoxButtons.OKCancel, MessageBoxIcon.None) == DialogResult.Cancel) return;
             //FilterInfoCollection videoDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
             vsource = new VideoCaptureDevice(videoDeviceMoniker);
@@ -804,7 +831,7 @@ namespace Needle
                 await Task.Delay(100);
             }
             AddToSources(photoSaveLocation);
-            statusBarInstruction.Text = "Ready";
+            promptInstruction.Text = "Ready";
         }
         private void CamNewFrame(object sender, AForge.Video.NewFrameEventArgs e)
         {
@@ -849,7 +876,7 @@ namespace Needle
                 MessageBox.Show("No open document.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            statusBarInstruction.Text = "Exporting video...";
+            promptInstruction.Text = "Exporting video...";
             if (MessageBox.Show("Would you like to save before export?", "Export", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes) SaveCnm();
 
             Button sub = new Button() { Text = "Submit", Location = new Point(50, 55), Size = new Size(70, 25) }, canx = new Button() { Text = "Cancel", Location = new Point(125, 55), Size = new Size(70, 25) };
@@ -904,7 +931,7 @@ namespace Needle
                     {
                         exporter.WriteVideoFrame(new Bitmap(frameloc));
                         ((ProgressBar)cbx.Controls[0]).Value += 1;
-                        statusBarInstruction.Text = "Exporting: frame " + framenumber.ToString();
+                        promptInstruction.Text = "Exporting: frame " + framenumber.ToString();
                         framenumber += 1;
                     }
                     catch (Exception err)
@@ -917,7 +944,7 @@ namespace Needle
             cbx.Close();
             exporter.Close();
             MessageBox.Show("Video exported successfully.", "Export", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            statusBarInstruction.Text = "Ready";
+            promptInstruction.Text = "Ready";
         }
         private void ShowConfig(object sender, EventArgs e) { ShowConfig(); }
         private DialogResult ShowConfig()
@@ -1038,6 +1065,9 @@ namespace Needle
 
         public static void AddBorder(Control ctrl)
         {
+            AddRoundedBorder(ctrl); //TEMPORARY
+            return;                 //TEMPORARY
+
             ctrl.FindForm().Paint += (object s, PaintEventArgs e) =>
             {
                 Rectangle rectangle = ctrl.ClientRectangle;
@@ -1117,7 +1147,7 @@ namespace Needle
                 Size = new Size(stdWidth, stdHeight),
                 Location = new Point(2, 2)
             };
-            Controls.Add(ctct);
+            //Controls.Add(ctct);
             imagePreview = new Label()
             {
                 Width = stdWidth - 4,
@@ -1154,11 +1184,11 @@ namespace Needle
             selectButt.Click += (object sender, EventArgs e) => { selectionHandler(this); };
             moveButts.Item1.Click += (object sender, EventArgs e) => { moveHandler(this, false); };
             moveButts.Item2.Click += (object sender, EventArgs e) => { moveHandler(this, true); };
-            ctct.Controls.Add(imagePreview);
-            ctct.Controls.Add(deleteButt);
-            ctct.Controls.Add(selectButt);
-            ctct.Controls.Add(moveButts.Item1);
-            ctct.Controls.Add(moveButts.Item2);
+            /*ctct.*/Controls.Add(imagePreview);
+            /*ctct.*/Controls.Add(deleteButt);
+            /*ctct.*/Controls.Add(selectButt);
+            /*ctct.*/Controls.Add(moveButts.Item1);
+            /*ctct.*/Controls.Add(moveButts.Item2);
             image = (imagePath == null ? "blank.jpg" : imagePath);
             this.Draw();
         }
@@ -1170,7 +1200,7 @@ namespace Needle
             selectButt.Location = new Point((stdWidth / 2) - 25, stdHeight - 22);
             moveButts.Item1.Top = stdHeight - 22;
             moveButts.Item2.Top = stdHeight - 22;
-            ctct.Size = new Size(stdWidth, stdHeight);
+            //ctct.Size = new Size(stdWidth, stdHeight);
             Size = new Size(stdWidth + 4, stdHeight + 4);
         }
 
@@ -1206,7 +1236,7 @@ namespace Needle
                 Size = new Size(stdWidth, stdHeight),
                 Location = new Point(2, 2)
             };
-            Controls.Add(ctct);
+            //Controls.Add(ctct);
             imagePreview = new Label()
             {
                 Text = imagePath.Substring(imagePath.LastIndexOf('\\') + 1),
@@ -1251,11 +1281,11 @@ namespace Needle
             selectButt.Click += (object sender, EventArgs e) => { selectionHandler(this); };
             moveButts.Item1.Click += (object sender, EventArgs e) => { moveHandler(this, false); };
             moveButts.Item2.Click += (object sender, EventArgs e) => { moveHandler(this, true);  };
-            ctct.Controls.Add(imagePreview);
-            ctct.Controls.Add(deleteButt);
-            ctct.Controls.Add(infoButt);
-            ctct.Controls.Add(moveButts.Item1);
-            ctct.Controls.Add(moveButts.Item2);
+            /*ctct.*/Controls.Add(imagePreview);
+            /*ctct.*/Controls.Add(deleteButt);
+            /*ctct.*/Controls.Add(infoButt);
+            /*ctct.*/Controls.Add(moveButts.Item1);
+            /*ctct.*/Controls.Add(moveButts.Item2);
             image = imagePath;
             this.Draw();
         }
@@ -1268,7 +1298,7 @@ namespace Needle
             selectButt.Location = new Point((stdWidth / 2) - 25, stdHeight - 22);
             moveButts.Item1.Top = stdHeight - 22;
             moveButts.Item2.Top = stdHeight - 22;
-            ctct.Size = new Size(stdWidth, stdHeight);
+            //ctct.Size = new Size(stdWidth, stdHeight);
             Size = new Size(stdWidth + 4, stdHeight + 4);
         }
 
