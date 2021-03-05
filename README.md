@@ -1,3 +1,5 @@
+*Note: this project is now semi-archived*
+
 # VideoSuite
 **A basic Video Editing suite for Windows.**
 
